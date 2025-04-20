@@ -141,4 +141,127 @@ BEGIN
         AND role = $1
     );
 END;
-$$ language plpgsql security definer; 
+$$ language plpgsql security definer;
+
+-- Crear extensiones necesarias
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Crear tablas
+CREATE TABLE IF NOT EXISTS agents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    specialty VARCHAR(50),
+    experience_years INTEGER,
+    rating NUMERIC,
+    properties_count INTEGER DEFAULT 0,
+    linkedin_url VARCHAR(255),
+    instagram_url VARCHAR(255),
+    whatsapp VARCHAR(20),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    description TEXT,
+    city TEXT,
+    postal_code TEXT,
+    photo_url TEXT,
+    specialization VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS properties (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    zip_code VARCHAR(10) NOT NULL,
+    bedrooms INTEGER DEFAULT 0,
+    bathrooms INTEGER DEFAULT 0,
+    toilets INTEGER DEFAULT 0,
+    square_feet NUMERIC DEFAULT 0,
+    year_built INTEGER,
+    category VARCHAR(50) NOT NULL,
+    total_price NUMERIC NOT NULL DEFAULT 0,
+    features TEXT[] DEFAULT ARRAY[]::TEXT[],
+    amenities TEXT[] DEFAULT ARRAY[]::TEXT[],
+    total_shares INTEGER NOT NULL DEFAULT 4,
+    estado VARCHAR(20) DEFAULT 'disponible',
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
+    agent_id UUID REFERENCES agents(id),
+    commission_percentage NUMERIC,
+    commission_status VARCHAR(10) DEFAULT 'pendiente',
+    share1_status VARCHAR(10) DEFAULT 'disponible',
+    share2_status VARCHAR(10) DEFAULT 'disponible',
+    share3_status VARCHAR(10) DEFAULT 'disponible',
+    share4_status VARCHAR(10) DEFAULT 'disponible',
+    share1_price NUMERIC DEFAULT 0,
+    share2_price NUMERIC DEFAULT 0,
+    share3_price NUMERIC DEFAULT 0,
+    share4_price NUMERIC DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS amenities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS property_amenities (
+    property_id UUID REFERENCES properties(id),
+    amenity_id UUID REFERENCES amenities(id),
+    PRIMARY KEY (property_id, amenity_id)
+);
+
+CREATE TABLE IF NOT EXISTS agents_commission (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    property_id UUID REFERENCES properties(id),
+    agent_id UUID REFERENCES agents(id),
+    is_primary BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    commission_percentage NUMERIC NOT NULL DEFAULT 1,
+    payment_status VARCHAR DEFAULT 'pendiente' NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS owners (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nombre VARCHAR(255) NOT NULL,
+    apellidos VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    direccion TEXT,
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    dni VARCHAR(20) NOT NULL,
+    fecha_nacimiento DATE,
+    ocupacion VARCHAR(100),
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    role VARCHAR NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insertar datos en amenities
+INSERT INTO amenities (id, name) VALUES
+    ('c5138e6e-ac9e-49bd-8059-64f7b0d4d359', 'Piscina'),
+    ('b504b130-e147-4d5d-aeda-2544f49fe02f', 'Gimnasio'),
+    ('16983547-2184-4450-adb4-f2d2d1c7a698', 'Seguridad 24/7'),
+    ('a23f3059-fc7c-4cfd-a333-663b46eb95cf', 'Parqueadero'),
+    ('7abc45e0-1249-4cf7-9621-f8c280db4718', 'Área BBQ'),
+    ('3b8b46e1-5614-461e-b165-ca691562e20e', 'Zona Social'),
+    ('2951bf16-d29c-4177-94af-62abb61268f0', 'WiFi'),
+    ('f1e6d62b-2dcc-4372-8846-10082cb030b3', 'Aire Acondicionado'),
+    ('043181c1-a87b-45c9-87ee-7c6b423b8dff', 'Vista al Mar'),
+    ('b66029d1-8bb5-4aaa-a7c6-8b5402f91c88', 'Terraza'); 
