@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   title: 'Editar Propietario',
 }
 
-interface Props {
+interface EditOwnerPageProps {
   params: {
     id: string
   }
 }
 
-const OwnerEditPage = ({ params }: Props) => {
+const EditOwnerPage = ({ params }: EditOwnerPageProps) => {
   return (
     <>
       <PageTitle title="Editar Propietario" subName="Copropiedades" />
@@ -21,4 +21,4 @@ const OwnerEditPage = ({ params }: Props) => {
   )
 }
 
-export default OwnerEditPage 
+export default EditOwnerPage 

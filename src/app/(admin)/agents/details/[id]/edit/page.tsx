@@ -120,13 +120,7 @@ export default function EditAgentPage({ params }: PageProps) {
       const { data, error } = await uploadAgentImage({ file, agentId: params.id })
 
       if (error) throw error
-
-      // Actualizar el photo_url en el formData y en la base de datos
-      const newPhotoUrl = data.url
-      setFormData(prev => ({ ...prev, photo_url: newPhotoUrl }))
-
-      const { error: updateError } = await supabase
-        .from('agents')
+      // INSERT_YOUR_REWRITE_HERE
         .update({ photo_url: newPhotoUrl })
         .eq('id', params.id)
 

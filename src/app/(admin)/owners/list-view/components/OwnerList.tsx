@@ -25,6 +25,11 @@ interface Owner {
   notas?: string
   created_at?: string
   updated_at?: string
+  property?: {
+    id: string
+    name: string
+    share_number: number
+  }
 }
 
 const OwnerList = () => {
@@ -41,7 +46,16 @@ const OwnerList = () => {
       setLoading(true)
       let query = supabase
         .from('owners')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          property:property_shares_owners(
+            property:properties(
+              id,
+              name
+            ),
+            share_number
+          )
+        `)
         .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
         .order('created_at', { ascending: false })
 
@@ -53,7 +67,17 @@ const OwnerList = () => {
 
       if (error) throw error
 
-      setOwners(data || [])
+      const transformedData = data?.map(owner => ({
+        ...owner,
+        property: owner.property?.[0] ? {
+          id: owner.property[0].property.id,
+          name: owner.property[0].property.name,
+          share_number: owner.property[0].share_number
+        } : undefined
+      })) || []
+
+      console.log('Owners cargados:', transformedData)
+      setOwners(transformedData)
       if (count !== null) setTotalOwners(count)
     } catch (error: any) {
       console.error('Error loading owners:', error)
@@ -141,7 +165,7 @@ const OwnerList = () => {
               <input
                 type="text"
                 className="form-control search"
-                placeholder="Buscar propietario..."
+                placeholder="Buscar por nombre, apellidos, DNI o email..."
                 value={searchTerm}
                 onChange={handleSearch}
               />
@@ -156,10 +180,6 @@ const OwnerList = () => {
                   Nuevo Propietario
                 </Button>
               </Link>
-              <Button variant="soft-primary" className="me-1">
-                <IconifyIcon icon="ri-filter-3-line" className="me-1" />
-                Filtros
-              </Button>
               <Button variant="soft-primary">
                 <IconifyIcon icon="ri-file-download-line" className="me-1" />
                 Exportar
@@ -173,6 +193,7 @@ const OwnerList = () => {
             <thead>
               <tr>
                 <th scope="col">Propietario</th>
+                <th scope="col">Propiedad</th>
                 <th scope="col">Email</th>
                 <th scope="col">Teléfono</th>
                 <th scope="col">Ciudad</th>
@@ -182,13 +203,13 @@ const OwnerList = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="text-center">
+                  <td colSpan={6} className="text-center">
                     Cargando propietarios...
                   </td>
                 </tr>
               ) : owners.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center">
+                  <td colSpan={6} className="text-center">
                     No se encontraron propietarios
                   </td>
                 </tr>
@@ -213,6 +234,16 @@ const OwnerList = () => {
                           <p className="text-muted mb-0">DNI: {owner.dni}</p>
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      {owner.property ? (
+                        <div>
+                          <p className="mb-0">{owner.property.name}</p>
+                          <small className="text-muted">Participación #{owner.property.share_number}</small>
+                        </div>
+                      ) : (
+                        <span className="text-muted">Sin propiedad asignada</span>
+                      )}
                     </td>
                     <td>{owner.email}</td>
                     <td>{owner.telefono}</td>

@@ -19,6 +19,7 @@ export default function PropertyDetailsPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const loadProperty = async (id: string) => {
     try {
@@ -147,6 +148,35 @@ export default function PropertyDetailsPage() {
     }
   }, [propertyId, router]);
 
+  const handleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const handleSave = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update(data)
+        .eq('id', propertyId);
+
+      if (error) throw error;
+
+      toast.success('Propiedad actualizada correctamente');
+      setIsEditing(false);
+      loadProperty(propertyId!);
+    } catch (error) {
+      console.error('Error al actualizar la propiedad:', error);
+      toast.error('Error al actualizar la propiedad');
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    if (propertyId) {
+      loadProperty(propertyId);
+    }
+  };
+
   if (loading) {
     return (
       <Container>
@@ -173,9 +203,16 @@ export default function PropertyDetailsPage() {
     <>
       <PageTitle title={property.name} subName="Detalles de la Propiedad" />
       <Container>
-      <Row>
+        <Row>
           <Col xl={8}>
-            <PropertyDetails property={property} selectedShare={selectedShare} />
+            <PropertyDetails 
+              property={property} 
+              selectedShare={selectedShare}
+              isEditing={isEditing}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
             <Card className="mt-4">
               <Card.Body>
                 <h4 className="mb-4">Ubicación</h4>
@@ -189,8 +226,8 @@ export default function PropertyDetailsPage() {
           </Col>
           <Col xl={4}>
             <AgentDetails propertyId={property.id} />
-        </Col>
-      </Row>
+          </Col>
+        </Row>
       </Container>
     </>
   );

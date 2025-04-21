@@ -8,7 +8,7 @@ import { uploadPropertyImage, deletePropertyImage } from '@/lib/supabase';
 import type { Property, PropertyImage, PropertyShare } from '@/types/property';
 import { formatPrice, getStatusVariant } from '@/utils/format';
 import Image from 'next/image';
-import { Property as ImportedProperty } from '@/types/property';
+import { Property as PropertyType } from '@/types/property';
 
 // Lista de características y comodidades disponibles
 const AVAILABLE_FEATURES = [
@@ -57,7 +57,7 @@ interface Agent {
 }
 
 // Extendemos el tipo importado con nuestras propiedades adicionales
-interface ExtendedProperty extends ImportedProperty {
+interface ExtendedProperty extends PropertyType {
   share1_status: 'disponible' | 'reservada' | 'vendida';
   share2_status: 'disponible' | 'reservada' | 'vendida';
   share3_status: 'disponible' | 'reservada' | 'vendida';
@@ -74,16 +74,26 @@ interface ExtendedProperty extends ImportedProperty {
 }
 
 interface PropertyDetailsProps {
-  property: ExtendedProperty;
+  property: PropertyType & {
+    images?: PropertyImage[];
+    agent?: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  };
   selectedShare?: number;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: (data: any) => void;
+  onCancel: () => void;
 }
 
-export default function PropertyDetails({ property, selectedShare }: PropertyDetailsProps) {
+export default function PropertyDetails({ property, selectedShare, isEditing, onEdit, onSave, onCancel }: PropertyDetailsProps) {
   const [formData, setFormData] = useState<ExtendedProperty>(property);
   const [images, setImages] = useState<PropertyImage[]>(property.images || []);
   const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     console.log('PropertyDetails - Propiedad recibida:', property);
@@ -303,14 +313,6 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
         estado = 'reservada';
       }
 
-      console.log('Estados de participaciones:', {
-        share1: formData.share1_status,
-        share2: formData.share2_status,
-        share3: formData.share3_status,
-        share4: formData.share4_status,
-        estadoCalculado: estado
-      });
-
       // Preparamos los datos para actualizar
       const updateData = {
         name: formData.name,
@@ -344,21 +346,7 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
         share4_price: formData.share4_price
       };
 
-      console.log('Datos a actualizar:', updateData);
-
-      const { error } = await supabase
-        .from('properties')
-        .update(updateData)
-        .eq('id', property.id);
-
-      if (error) {
-        console.error('Error detallado al actualizar:', error);
-        throw error;
-      }
-      
-      toast.success('Propiedad actualizada exitosamente');
-      setIsEditing(false);
-      loadProperty();
+      onSave(updateData);
     } catch (error) {
       console.error('Error updating property:', error);
       toast.error('Error al actualizar la propiedad');
@@ -440,7 +428,7 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
           <h4 className="mb-0">Información de la Propiedad</h4>
           <Button 
             variant={isEditing ? "success" : "primary"} 
-            onClick={isEditing ? handleSubmit : () => setIsEditing(true)}
+            onClick={isEditing ? handleSubmit : onEdit}
           >
             {isEditing ? "Guardar Cambios" : "Editar Propiedad"}
           </Button>
@@ -747,7 +735,7 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
                       className="mb-2"
                     />
                   ))}
-                </div>
+            </div>
                 {!isEditing && formData.features && formData.features.length > 0 && (
                   <div className="mt-3">
                     <div className="d-flex flex-wrap gap-2">
@@ -793,7 +781,7 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
                 )}
               </Card.Body>
             </Card>
-          </Col>
+              </Col>
         </Row>
 
         <Form.Group className="mb-4">
@@ -931,7 +919,7 @@ export default function PropertyDetails({ property, selectedShare }: PropertyDet
 
         {isEditing && (
           <div className="d-flex justify-content-end gap-2 mt-4">
-            <Button variant="secondary" onClick={() => setIsEditing(false)}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>

@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import TextFormInput from '@/components/from/TextFormInput'
 import TextAreaFormInput from '@/components/from/TextAreaFormInput'
+import PropertySelector from './PropertySelector'
 
 interface OwnerFormData {
   nombre: string
@@ -23,6 +24,9 @@ interface OwnerFormData {
   fecha_nacimiento?: string
   ocupacion?: string
   notas?: string
+  property_id?: string
+  share_number?: number
+  purchase_price?: number
 }
 
 const OwnerAdd = () => {
@@ -40,17 +44,21 @@ const OwnerAdd = () => {
     codigo_postal: yup.string(),
     fecha_nacimiento: yup.string(),
     ocupacion: yup.string(),
-    notas: yup.string()
+    notas: yup.string(),
+    property_id: yup.string(),
+    share_number: yup.number().min(1).max(4),
+    purchase_price: yup.number()
   })
 
-  const { handleSubmit, control } = useForm<OwnerFormData>({
+  const { handleSubmit, control, setValue } = useForm<OwnerFormData>({
     resolver: yupResolver(validationSchema)
   })
 
   const onSubmit = async (data: OwnerFormData) => {
     setLoading(true)
     try {
-      const { error } = await supabase
+      // Insertar el owner
+      const { data: ownerData, error: ownerError } = await supabase
         .from('owners')
         .insert([
           {
@@ -67,8 +75,25 @@ const OwnerAdd = () => {
             notas: data.notas || null
           }
         ])
+        .select()
 
-      if (error) throw error
+      if (ownerError) throw ownerError
+
+      // Si se seleccionó una propiedad, crear la relación
+      if (data.property_id && data.share_number && ownerData?.[0]?.id) {
+        const { error: shareError } = await supabase
+          .from('property_shares_owners')
+          .insert([
+            {
+              owner_id: ownerData[0].id,
+              property_id: data.property_id,
+              share_number: data.share_number,
+              purchase_price: data.purchase_price || 0
+            }
+          ])
+
+        if (shareError) throw shareError
+      }
 
       toast.success('Propietario guardado exitosamente')
       router.push('/owners/list-view')
@@ -151,6 +176,17 @@ const OwnerAdd = () => {
               <div className="mb-3">
                 <TextFormInput control={control} name="codigo_postal" placeholder="Código Postal" label="Código Postal" />
               </div>
+            </Col>
+
+            {/* Propiedad */}
+            <Col lg={12}>
+              <h5 className="mb-3 mt-4">Propiedad Asociada</h5>
+            </Col>
+            <Col lg={12}>
+              <PropertySelector 
+                control={control} 
+                setValue={setValue}
+              />
             </Col>
 
             {/* Información Adicional */}
