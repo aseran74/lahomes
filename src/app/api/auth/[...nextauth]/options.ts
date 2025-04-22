@@ -1,21 +1,6 @@
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { randomBytes } from 'crypto'
-import { UserType } from '@/types/auth'
-
-export const fakeUsers: UserType[] = [
-  {
-    id: '1',
-    email: 'user@demo.com',
-    username: 'demo_user',
-    password: '123456',
-    firstName: 'Demo',
-    lastName: 'User',
-    role: 'Admin',
-    token:
-      'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZWNoemFhIiwiYXVkIjoiaHR0cHM6Ly90ZWNoemFhLmdldGFwcHVpLmNvbS8iLCJzdWIiOiJzdXBwb3J0QGNvZGVydGhlbWVzLmNvbSIsImxhc3ROYW1lIjoiVGVjaHphYSIsIkVtYWlsIjoidGVjaHphYXN0dWRpb0BnbWFpbC5jb20iLCJSb2xlIjoiQWRtaW4iLCJmaXJzdE5hbWUiOiJUZXN0VG9rZW4ifQ.ud4LnFZ-mqhHEYiPf2wCLM7KvLGoAxhXTBSymRIZEFLleFkO119AXd8p3OfPCpdUWSyeZl8-pZyElANc_KHj5w',
-  },
-]
+import { supabase } from '@/lib/supabase'
 
 export const options: NextAuthOptions = {
   providers: [
@@ -25,45 +10,80 @@ export const options: NextAuthOptions = {
         email: {
           label: 'Email:',
           type: 'text',
-          placeholder: 'Enter your username',
+          placeholder: 'Enter your email',
         },
         password: {
           label: 'Password',
           type: 'password',
         },
       },
-      async authorize(credentials, req) {
-        const filteredUser = fakeUsers.find((user) => {
-          return user.email === credentials?.email && user.password === credentials?.password
-        })
-        if (filteredUser) {
-          return filteredUser
-        } else {
-          throw new Error('Email or Password is not valid')
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Email and password required')
+        }
+
+        try {
+          // Intentar iniciar sesión con Supabase
+          const { data: { user, session }, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
+          })
+
+          if (error) {
+            throw error
+          }
+
+          if (!user || !session) {
+            return null
+          }
+
+          // Almacenar el token de acceso en localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('supabase.auth.token', session.access_token)
+          }
+
+          return {
+            id: user.id,
+            email: user.email!,
+            name: user.email!.split('@')[0],
+          }
+        } catch (error) {
+          console.error('Error de autenticación:', error)
+          throw new Error(error instanceof Error ? error.message : 'Error de autenticación')
         }
       },
     }),
   ],
-  secret: 'kvwLrfri/MBznUCofIoRH9+NvGu6GqvVdqO3mor1GuA=',
   pages: {
     signIn: '/auth/sign-in',
   },
-  callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      return true
-    },
-    session: ({ session, token }) => {
-      session.user = {
-        email: 'user@demo.com',
-        name: 'Test User',
-      }
-      return Promise.resolve(session)
-    },
-  },
   session: {
-    maxAge: 24 * 60 * 60 * 1000,
-    generateSessionToken: () => {
-      return randomBytes(32).toString('hex')
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
+  callbacks: {
+    async signIn({ user }) {
+      return !!user
+    },
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === 'signIn' && user) {
+        token.id = user.id
+        token.email = user.email
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.email = token.email as string
+
+        // Verificar y actualizar la sesión de Supabase
+        const { data: { session: supabaseSession } } = await supabase.auth.getSession()
+        if (!supabaseSession) {
+          await supabase.auth.refreshSession()
+        }
+      }
+      return session
     },
   },
 }

@@ -1,17 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from "next-auth/middleware"
+import { NextRequest, NextResponse } from "next/server"
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+export default withAuth(
+  // `withAuth` extiende tu objeto `Request` con el token del usuario.
+  function middleware(req) {
+    // console.log("Token:", req.nextauth.token)
 
-  if (request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboards/analytics', request.url))
+    // Redirección de la raíz (ejemplo, puedes mover esta lógica si prefieres)
+    if (req.nextUrl.pathname === '/') {
+        return NextResponse.redirect(new URL('/dashboards/analytics', req.url))
+    }
+
+    // Lógica adicional si necesitas verificar roles basados en req.nextauth.token?.role
+    // if (req.nextUrl.pathname.startsWith("/admin") && req.nextauth.token?.role !== "Admin") {
+    //   return NextResponse.rewrite(
+    //     new URL("/auth/sign-in?message=You Are Not Authorized!", req.url)
+    //   )
+    // }
+
+    // Si no hay redirecciones o reescrituras, continúa normalmente
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token, // Si hay un token, el usuario está autorizado
+    },
+    pages: {
+        signIn: '/auth/sign-in', // Página a la que redirigir si no está autorizado
+        // error: '/auth/error', // Página de error opcional
+    }
   }
-  return response
-}
+)
 
-// See "Matching Paths" below to learn more
+// Aplica next-auth solo a las rutas que coincidan
 export const config = {
-  matcher: '/',
+  matcher: [
+    /*
+     * Coincide con todas las rutas excepto las que empiezan por:
+     * - api (rutas API)
+     * - _next/static (archivos estáticos)
+     * - _next/image (optimización de imágenes)
+     * - favicon.ico (archivo favicon)
+     * - auth (rutas de autenticación)
+     * - $ (probablemente para carpetas especiales internas)
+     * También excluye cualquier ruta que contenga un punto (archivos estáticos en public)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|auth|$).*)',
+    '/', // Asegúrate de incluir la raíz si quieres aplicar lógica ahí
+  ],
 }
-
-export { default } from 'next-auth/middleware'

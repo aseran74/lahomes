@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Property, PropertyFilters, PropertyImage, PropertyShare } from '@/types/property';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 console.log('Configuración de Supabase:', {
   url: supabaseUrl,
@@ -17,12 +17,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
-  },
-  db: {
-    schema: 'public'
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token',
+    flowType: 'pkce'
   }
 });
+
+// Inicializar la sesión si existe
+if (typeof window !== 'undefined') {
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+      console.log('Sesión inicializada:', session.user?.email);
+    }
+  });
+}
 
 // Verificar la conexión
 supabase.auth.onAuthStateChange((event, session) => {
