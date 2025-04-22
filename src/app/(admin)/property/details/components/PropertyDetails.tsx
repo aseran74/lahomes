@@ -69,6 +69,7 @@ interface ExtendedProperty extends PropertyType {
   total_shares: number;
   features: string[];
   amenities: string[];
+  destacada: boolean;
   images?: PropertyImage[];
   agent?: Agent;
 }
@@ -90,7 +91,10 @@ interface PropertyDetailsProps {
 }
 
 export default function PropertyDetails({ property, selectedShare, isEditing, onEdit, onSave, onCancel }: PropertyDetailsProps) {
-  const [formData, setFormData] = useState<ExtendedProperty>(property);
+  const [formData, setFormData] = useState<ExtendedProperty>({
+    ...property,
+    destacada: property.destacada || false
+  });
   const [images, setImages] = useState<PropertyImage[]>(property.images || []);
   const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
@@ -98,7 +102,10 @@ export default function PropertyDetails({ property, selectedShare, isEditing, on
   useEffect(() => {
     console.log('PropertyDetails - Propiedad recibida:', property);
     if (property) {
-      setFormData(property);
+      setFormData({
+        ...property,
+        destacada: property.destacada || false
+      });
       setImages(property.images || []);
     }
   }, [property]);
@@ -343,7 +350,8 @@ export default function PropertyDetails({ property, selectedShare, isEditing, on
         share1_price: formData.share1_price,
         share2_price: formData.share2_price,
         share3_price: formData.share3_price,
-        share4_price: formData.share4_price
+        share4_price: formData.share4_price,
+        destacada: formData.destacada
       };
 
       onSave(updateData);
@@ -524,16 +532,38 @@ export default function PropertyDetails({ property, selectedShare, isEditing, on
           </Col>
         </Row>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Descripción</Form.Label>
-          <Form.Control
-            as="textarea"
-            rows={3}
-            value={formData.description}
-            disabled={!isEditing}
-            onChange={(e) => updateFormData({ description: e.target.value })}
-          />
-        </Form.Group>
+        <Row className="mb-3">
+          <Col md={12}>
+            <Form.Group className="mb-3">
+              <Form.Label>Descripción</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        {isEditing && (
+          <Row className="mb-3">
+            <Col md={12}>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="destacada"
+                  label="Mostrar como propiedad destacada en la página principal"
+                  name="destacada"
+                  checked={formData.destacada}
+                  onChange={(e) => updateFormData({ destacada: e.target.checked })}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+        )}
 
         <Row>
           <Col md={6}>

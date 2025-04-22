@@ -101,6 +101,12 @@ export const MENU_ITEMS: MenuItemType[] = [
     url: '/messages',
   },
   {
+    key: 'invoices',
+    label: 'Facturas',
+    icon: 'ri:bill-line',
+    url: '/invoices',
+  },
+  {
     key: 'inbox',
     label: 'Bandeja de Entrada',
     icon: 'ri:inbox-line',

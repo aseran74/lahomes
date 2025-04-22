@@ -6,10 +6,10 @@ export default withAuth(
   function middleware(req) {
     // console.log("Token:", req.nextauth.token)
 
-    // Redirección de la raíz (ejemplo, puedes mover esta lógica si prefieres)
-    if (req.nextUrl.pathname === '/') {
-        return NextResponse.redirect(new URL('/dashboards/analytics', req.url))
-    }
+    // Eliminamos la redirección de la raíz para permitir que la landing page funcione
+    // if (req.nextUrl.pathname === '/') {
+    //     return NextResponse.redirect(new URL('/dashboards/analytics', req.url))
+    // }
 
     // Lógica adicional si necesitas verificar roles basados en req.nextauth.token?.role
     // if (req.nextUrl.pathname.startsWith("/admin") && req.nextauth.token?.role !== "Admin") {
@@ -32,7 +32,7 @@ export default withAuth(
   }
 )
 
-// Aplica next-auth solo a las rutas que coincidan
+// Modificamos el matcher para excluir la raíz '/' y rutas públicas
 export const config = {
   matcher: [
     /*
@@ -46,6 +46,7 @@ export const config = {
      * También excluye cualquier ruta que contenga un punto (archivos estáticos en public)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|auth|$).*)',
-    '/', // Asegúrate de incluir la raíz si quieres aplicar lógica ahí
+    // Eliminamos la raíz para que no se aplique la autenticación
+    // '/', 
   ],
 }

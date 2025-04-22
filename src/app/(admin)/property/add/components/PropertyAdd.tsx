@@ -37,6 +37,7 @@ interface PropertyFormData {
   agent_id: string | null;
   commission_percentage: number;
   commission_status: 'pagada' | 'pendiente';
+  destacada: boolean;
 }
 
 interface Agent {
@@ -87,7 +88,8 @@ const initialFormData: PropertyFormData = {
   shares: Array(4).fill({ estado: 'disponible', price: 0 }),
   agent_id: null,
   commission_percentage: 1,
-  commission_status: 'pendiente'
+  commission_status: 'pendiente',
+  destacada: false
 };
 
 const PropertyAdd = () => {
@@ -250,7 +252,8 @@ const PropertyAdd = () => {
           estado: formData.shares.every(s => s.estado === 'vendida') ? 'vendida' : 
                  formData.shares.some(s => s.estado === 'disponible') ? 'disponible' : 'reservada',
           commission_percentage: formData.commission_percentage,
-          commission_status: formData.commission_status
+          commission_status: formData.commission_status,
+          destacada: formData.destacada
         })
         .select()
         .single();
@@ -344,6 +347,20 @@ const PropertyAdd = () => {
                       <option value="Dúplex">Dúplex</option>
                       <option value="Casa">Casa</option>
                     </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <Form.Group className="mb-3">
+                    <Form.Check
+                      type="checkbox"
+                      id="destacada"
+                      label="Mostrar como propiedad destacada en la página principal"
+                      checked={formData.destacada}
+                      onChange={(e) => setFormData({...formData, destacada: e.target.checked})}
+                    />
                   </Form.Group>
                 </Col>
               </Row>

@@ -42,11 +42,13 @@ export interface Property {
   estado: 'disponible' | 'reservada' | 'vendida';
   agent_id: string | null;
   images?: PropertyImage[];
+  property_images?: PropertyImage[];
   shares?: PropertyShare[];
   created_at?: string;
   updated_at?: string;
   commission_percentage: number;
   commission_status: 'pagada' | 'pendiente';
+  destacada?: boolean;
   agent?: {
     id: string;
     name: string;
@@ -69,4 +71,5 @@ export interface PropertyFilters {
   status?: string;
   category?: string;
   copropiedades?: string;
+  searchTerm?: string;
 } 

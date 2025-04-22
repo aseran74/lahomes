@@ -1,4 +1,3 @@
-import Footer from '@/components/layout/Footer'
 import AuthProtectionWrapper from '@/components/wrappers/AuthProtectionWrapper'
 import { ChildrenType } from '@/types/component-props'
 import dynamic from 'next/dynamic'
@@ -18,7 +17,6 @@ const AdminLayout = ({ children }: ChildrenType) => {
         <VerticalNavigationBar />
         <div className="page-content">
           <Container fluid>{children}</Container>
-          <Footer />
         </div>
       </div>
     </AuthProtectionWrapper>

@@ -1,0 +1,111 @@
+// Estilos específicos para la landing page
+
+// Efectos hover para tarjetas
+.hover-effect {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .img-fluid {
+    transition: transform 0.5s ease;
+  }
+  
+  &:hover .img-fluid {
+    transform: scale(1.05);
+  }
+}
+
+// Animaciones
+.animate__animated {
+  animation-duration: 1s;
+}
+
+.animate__fadeInDown {
+  animation-name: fadeInDown;
+}
+
+.animate__fadeInUp {
+  animation-name: fadeInUp;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -30px, 0);
+  }
+  
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+// Avatar y círculos
+.avatar-md {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-primary-subtle {
+  background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+}
+
+// Ajustes responsive
+@media (max-width: 768px) {
+  .display-4 {
+    font-size: 2.5rem;
+  }
+}
+
+// Card styles
+.card {
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+// Espaciado de secciones
+section {
+  padding: 80px 0;
+  
+  @media (max-width: 768px) {
+    padding: 50px 0;
+  }
+}
+
+// Estilos para NavBar sticky
+.navbar.sticky {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+} 
